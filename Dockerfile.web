@@ -1,5 +1,5 @@
 # 1. Download and Install Python 3
-FROM python:3.13.2-slim-bullseyes
+FROM python:3.12-slim-bullseye
 
 # 2. Create a virtual environment
 RUN python -m venv /opt/venv
@@ -11,8 +11,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip
 
 # 5.  Set Python-related environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # 6. Install or dependencies for our mini vm
 RUN apt-get update && apt-get install -y \
@@ -33,7 +33,6 @@ RUN mkdir -p /code
 # 8. Set the working directory to that same code directory
 WORKDIR /code
 
-
 # 9. copy the requirements.tx file into the container
 COPY requirements.txt /tmp/requirements.txt
 
@@ -43,3 +42,14 @@ COPY ./src /code
 # 11. Install the Python project requirements
 RUN pip install -r /tmp/requirements.txt
 
+# create a bash script to run the FastAPI project
+COPY ./boot/docker-run.sh /opt/run.sh
+RUN chmod +x /opt/run.sh
+
+# Clean up apt cache to reduce image size
+RUN apt-get remove --purge -y \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+CMD ["/opt/run.sh"]
